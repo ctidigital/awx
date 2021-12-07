@@ -105,6 +105,9 @@ function LDAPEdit() {
       [`${ldapCategory}REQUIRE_GROUP`]: form[`${ldapCategory}REQUIRE_GROUP`],
       [`${ldapCategory}SERVER_URI`]: form[`${ldapCategory}SERVER_URI`],
       [`${ldapCategory}START_TLS`]: form[`${ldapCategory}START_TLS`],
+      [`${ldapCategory}CONNECTION_OPTIONS`]: formatJson(
+        form[`${ldapCategory}CONNECTION_OPTIONS`]
+      ),
       [`${ldapCategory}USER_DN_TEMPLATE`]:
         form[`${ldapCategory}USER_DN_TEMPLATE`],
       [`${ldapCategory}GROUP_SEARCH`]: formatJson(
@@ -185,6 +188,10 @@ function LDAPEdit() {
                     name={`${ldapCategory}BIND_DN`}
                     config={ldap[`${ldapCategory}BIND_DN`]}
                   />
+                <ObjectField
+                  name={`${ldapCategory}CONNECTION_OPTIONS`}
+                  config={ldap[`${ldapCategory}CONNECTION_OPTIONS`]}
+                />
                   <InputField
                     name={`${ldapCategory}USER_DN_TEMPLATE`}
                     config={ldap[`${ldapCategory}USER_DN_TEMPLATE`]}

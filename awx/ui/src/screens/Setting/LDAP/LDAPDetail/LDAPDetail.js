@@ -1,8 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { Link, Redirect, useRouteMatch } from 'react-router-dom';
 
 import { t } from '@lingui/macro';
-import { Button } from '@patternfly/react-core';
+import { Button, ExpandableSection } from '@patternfly/react-core';
 import { CaretLeftIcon } from '@patternfly/react-icons';
 import { CardBody, CardActionsRow } from 'components/Card';
 import ContentError from 'components/ContentError';
@@ -44,11 +44,9 @@ function LDAPDetail() {
 
       const mergedData = {};
       Object.keys(data).forEach((key) => {
-        if (key.includes('_CONNECTION_OPTIONS')) {
-          return;
-        }
         mergedData[key] = options[key];
         mergedData[key].value = data[key];
+        mergedData[key].isAdvanced = key.includes('_CONNECTION_OPTIONS');
       });
 
       const ldap1 = filterByPrefix(mergedData, 'AUTH_LDAP_1_');
@@ -86,6 +84,7 @@ function LDAPDetail() {
     request();
   }, [request]);
 
+  const [ isExpanded, setIsExpanded ] = useState(false);
   const baseURL = '/settings/ldap';
   const tabsArray = [
     {
@@ -134,6 +133,10 @@ function LDAPDetail() {
     return <Redirect from={path} to={`${baseURL}/default/details`} exact />;
   }
 
+  function toggleExpanded() {
+    setIsExpanded(!isExpanded);
+  }
+
   return (
     <>
       <RoutedTabs tabsArray={tabsArray} />
@@ -143,7 +146,7 @@ function LDAPDetail() {
           {!isLoading && error && <ContentError error={error} />}
           {!isLoading && !Object.values(LDAPDetails)?.includes(null) && (
             <DetailList>
-              {LDAPDetails[category].map(([key, detail]) => (
+              {LDAPDetails[category].filter(e => !e[1].isAdvanced).map(([key, detail]) => (
                 <SettingDetail
                   key={key}
                   id={key}
@@ -158,6 +161,28 @@ function LDAPDetail() {
           )}
         </>
         {me?.is_superuser && (
+        <>
+          <ExpandableSection
+                toggleText={t`Advanced Settings`}
+                onToggle={toggleExpanded}
+                isExpanded={isExpanded}
+            >
+          {!isLoading && !Object.values(LDAPDetails)?.includes(null) && (
+            <DetailList>
+                  {LDAPDetails[category].filter(e => e[1].isAdvanced).map(([key, detail]) => (
+                    <SettingDetail
+                      key={key}
+                      id={key}
+                      helpText={detail?.help_text}
+                      label={detail?.label}
+                      type={detail?.type}
+                      unit={detail?.unit}
+                      value={detail?.value}
+                    />
+                  ))}
+            </DetailList>
+                  )}
+          </ExpandableSection>
           <CardActionsRow>
             <Button
               ouiaId="ldap-detail-edit-button"
@@ -168,6 +193,7 @@ function LDAPDetail() {
               {t`Edit`}
             </Button>
           </CardActionsRow>
+            </>
         )}
       </CardBody>
     </>
