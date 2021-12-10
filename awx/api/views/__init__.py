@@ -2720,7 +2720,7 @@ class JobTemplateLabelList(DeleteLastUnattachLabelMixin, SubListCreateAttachDeta
 
 
 class JobTemplateCallback(GenericAPIView):
-
+    print('CTI starting Callback')
     model = models.JobTemplate
     permission_classes = (JobTemplateCallbackPermission,)
     serializer_class = serializers.EmptySerializer
@@ -2732,6 +2732,7 @@ class JobTemplateCallback(GenericAPIView):
         return super(JobTemplateCallback, self).dispatch(*args, **kwargs)
 
     def find_matching_hosts(self):
+        print('CTI: looking for matching host')
         """
         Find the host(s) in the job template's inventory that match the remote
         host for the current request.
@@ -2742,6 +2743,7 @@ class JobTemplateCallback(GenericAPIView):
             for value in self.request.META.get(header, '').split(','):
                 value = value.strip()
                 if value:
+                    print('Adding remote host {}'.format(value))
                     remote_hosts.add(value)
         # Add the reverse lookup of IP addresses.
         for rh in list(remote_hosts):
@@ -2799,12 +2801,20 @@ class JobTemplateCallback(GenericAPIView):
         return Response(data)
 
     def post(self, request, *args, **kwargs):
+
         extra_vars = None
+        alt_inventory = None
         # Be careful here: content_type can look like '<content_type>; charset=blar'
         if request.content_type.startswith("application/json"):
             extra_vars = request.data.get("extra_vars", None)
+            alt_inventory_name = request.data.get("inventory", None)
+            if alt_inventory_name:
+                alt_inventory = models.Inventory.objects.filter(name=alt_inventory_name).first()
         # Permission class should have already validated host_config_key.
         job_template = self.get_object()
+        print(job_template.ask_inventory_on_launch)
+        if job_template.ask_inventory_on_launch and alt_inventory:
+            job_template.inventory = alt_inventory
         # Attempt to find matching hosts based on remote address.
         matching_hosts = self.find_matching_hosts()
         # If the host is not found, update the inventory before trying to
